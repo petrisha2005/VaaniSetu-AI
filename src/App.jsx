@@ -2,11 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   FileText, Mic, Play, Pause, CheckCircle2, ShieldCheck, 
   Volume2, Sparkles, ArrowRight, Upload, AlertCircle, RefreshCw,
-  FileCheck, HelpCircle, Layers, Cpu, Radio, ChevronRight, Languages, X, RotateCcw
+  Layers, Cpu, Radio, Languages, X, RotateCcw, Globe
 } from 'lucide-react';
+import { SUPPORTED_LANGUAGES, getLanguageMeta } from './languages';
 
 export default function App() {
-  // Mode & File State
+  // Multilingual State
+  const [selectedLanguageCode, setSelectedLanguageCode] = useState('kn-IN');
+  const currentLang = getLanguageMeta(selectedLanguageCode);
+
+  // Document & Mode State
   const [isSampleMode, setIsSampleMode] = useState(true);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('/kannada.png');
@@ -14,7 +19,7 @@ export default function App() {
   const [fileName, setFileName] = useState('kannada.png');
   
   // Question & Speech State
-  const [questionText, setQuestionText] = useState("ಈ ನೋಟಿಸ್ನಲ್ಲಿ ನಾನು ಏನು ಮಾಡಬೇಕು ಮತ್ತು ಕೊನೆಯ ದಿನಾಂಕ ಯಾವುದು?");
+  const [questionText, setQuestionText] = useState(currentLang.sampleQuestion);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isPlayingQuestion, setIsPlayingQuestion] = useState(false);
@@ -34,22 +39,88 @@ export default function App() {
   const [audioDuration, setAudioDuration] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
 
-  // Default Verified Sample Answer Data
-  const sampleAnswerData = {
-    answer: "ಈ ನೋಟಿಸ್ ಕೆ.ಆರ್.ಪುರಂ ತಾಲ್ಲೂಕಿನ ಸೂಲಿಕೆರೆ ಗ್ರಾಮದಲ್ಲಿ ರಸ್ತೆ ವಿಸ್ತರಣೆ ಮತ್ತು ಅಭಿವೃದ್ಧಿ ಯೋಜನೆಗಾಗಿ ಕರ್ನಾಟಕ ಭೂಸ್ವಾಧೀನ ಕಾಯ್ದೆ 2013ರ ಅಡಿಯಲ್ಲಿ ಜಮೀನು ಸ್ವಾಧೀನಪಡಿಸಿಕೊಳ್ಳುವುದನ್ನು ಕುರಿತು ಪ್ರಕಟಿಸಿದ ಪಟ್ಟಿಯಾಗಿದೆ. ಇದರಲ್ಲಿ ಸರ್ವೆ ನಂಬರ್‌ಗಳು, ಮಾಲೀಕರ ಹೆಸರು, ವಿಸ್ತೀರ್ಣ ಮತ್ತು ಪರಿಹಾರ ಮೊತ್ತಗಳನ್ನು ನೀಡಲಾಗಿದೆ. ನೋಟಿಸ್‌ನ ಕೊನೆಯಲ್ಲಿ ಭೂಮಿ ಮತ್ತು ಪಹಣಿ (RTC), ಆಧಾರ್ ಕಾರ್ಡ್ ನಕಲು, ಬ್ಯಾಂಕ್ ಪಾಸ್ ಬುಕ್ ನಕಲು ಮತ್ತು PAN ಕಾರ್ಡ್ ನಕಲು ಎಂದು ದಾಖಲೆಗಳನ್ನು ಪಟ್ಟಿ ಮಾಡಿದೆ. ಆದರೆ, ನೋಟಿಸ್‌ನಲ್ಲಿ ಸಂಬಂಧಿಸಿದಂತೆ ಯಾವುದೇ ನಿರ್ದಿಷ್ಟ ಕ್ರಿಯೆಯನ್ನು ಮಾಡಲು ಸ್ಪಷ್ಟವಾಗಿ ಹೇಳಿಲ್ಲ ಮತ್ತು ಪ್ರಕಟಣೆಯ ದಿನಾಂಕ ೧೪/೧/೨೦೨೪ ಆಗಿದ್ದರೂ, ಯಾವ ಕೆಲಸಕ್ಕೆ ಕೊನೆಯ ದಿನಾಂಕವೆಂಬುದನ್ನು ನಮೂದಿಸಿಲ್ಲ.",
-    englishAnswer: "According to this notice issued under the Karnataka Land Acquisition Act 2013 for proposed road widening in Sulikere village (KR Puram Taluk), landowners must submit RTC land records, Aadhaar card, Bank passbook, and PAN card copies to the Taluk office. Note: The notice is dated 14/01/2024, but no specific submission deadline date is stated in the document.",
-    action: ["ಭೂಮಿ ಮತ್ತು ಪಹಣಿ (RTC)", "ಆಧಾರ್ ಕಾರ್ಡ್ ನಕಲು", "ಬ್ಯಾಂಕ್ ಪಾಸ್ ಬುಕ್ ನಕಲು", "PAN ಕಾರ್ಡ್ ನಕಲು"],
-    deadline: "No specific submission deadline is stated in the document (Notice Date: 14/01/2024)",
-    evidence: "• ಭೂಮಿ ಮತ್ತು ಪಹಣಿ (RTC) • ಆಧಾರ್ ಕಾರ್ಡ್ ನಕಲು • ಬ್ಯಾಂಕ್ ಪಾಸ್ ಬುಕ್ ನಕಲು • PAN ಕಾರ್ಡ್ ನಕಲು... ದಿನಾಂಕ: ೧೪/೦೧/೨೦೨೪",
-    grounded: true,
-    confidence: "high",
-    audioUrl: "/vaanisetu_answer.wav"
+  // Sample Baseline Answer Map per language
+  const sampleAnswersMap = {
+    "kn-IN": {
+      answer: "ಈ ನೋಟಿಸ್ ಕೆ.ಆರ್.ಪುರಂ ತಾಲ್ಲೂಕಿನ ಸೂಲಿಕೆರೆ ಗ್ರಾಮದಲ್ಲಿ ರಸ್ತೆ ವಿಸ್ತರಣೆ ಮತ್ತು ಅಭಿವೃದ್ಧಿ ಯೋಜನೆಗಾಗಿ ಕರ್ನಾಟಕ ಭೂಸ್ವಾಧೀನ ಕಾಯ್ದೆ 2013ರ ಅಡಿಯಲ್ಲಿ ಜಮೀನು ಸ್ವಾಧೀನಪಡಿಸಿಕೊಳ್ಳುವುದನ್ನು ಕುರಿತು ಪ್ರಕಟಿಸಿದ ಪಟ್ಟಿಯಾಗಿದೆ. ಇದರಲ್ಲಿ ಸರ್ವೆ ನಂಬರ್‌ಗಳು, ಮಾಲೀಕರ ಹೆಸರು, ವಿಸ್ತೀರ್ಣ ಮತ್ತು ಪರಿಹಾರ ಮೊತ್ತಗಳನ್ನು ನೀಡಲಾಗಿದೆ. ನೋಟಿಸ್‌ನ ಕೊನೆಯಲ್ಲಿ ಭೂಮಿ ಮತ್ತು ಪಹಣಿ (RTC), ಆಧಾರ್ ಕಾರ್ಡ್ ನಕಲು, ಬ್ಯಾಂಕ್ ಪಾಸ್ ಬುಕ್ ನಕಲು ಮತ್ತು PAN ಕಾರ್ಡ್ ನಕಲು ಎಂದು ದಾಖಲೆಗಳನ್ನು ಪಟ್ಟಿ ಮಾಡಿದೆ. ಆದರೆ, ನೋಟಿಸ್‌ನಲ್ಲಿ ಸಂಬಂಧಿಸಿದಂತೆ ಯಾವುದೇ ನಿರ್ದಿಷ್ಟ ಕ್ರಿಯೆಯನ್ನು ಮಾಡಲು ಸ್ಪಷ್ಟವಾಗಿ ಹೇಳಿಲ್ಲ ಮತ್ತು ಪ್ರಕಟಣೆಯ ದಿನಾಂಕ ೧೪/೧/೨೦೨೪ ಆಗಿದ್ದರೂ, ಯಾವ ಕೆಲಸಕ್ಕೆ ಕೊನೆಯ ದಿನಾಂಕವೆಂಬುದನ್ನು ನಮೂದಿಸಿಲ್ಲ.",
+      action: ["ಭೂಮಿ ಮತ್ತು ಪಹಣಿ (RTC)", "ಆಧಾರ್ ಕಾರ್ಡ್ ನಕಲು", "ಬ್ಯಾಂಕ್ ಪಾಸ್ ಬುಕ್ ನಕಲು", "PAN ಕಾರ್ಡ್ ನಕಲು"],
+      deadline: "ದಾಖಲೆಯಲ್ಲಿ ಯಾವುದೇ ನಿರ್ದಿಷ್ಟ ಕೊನೆಯ ದಿನಾಂಕವನ್ನು ನಮೂದಿಸಿಲ್ಲ (ಪ್ರಕಟಣೆ ದಿನಾಂಕ: 14/01/2024)",
+      evidence: "• ಭೂಮಿ ಮತ್ತು ಪಹಣಿ (RTC) • ಆಧಾರ್ ಕಾರ್ಡ್ ನಕಲು • ಬ್ಯಾಂಕ್ ಪಾಸ್ ಬುಕ್ ನಕಲು • PAN ಕಾರ್ಡ್ ನಕಲು... ದಿನಾಂಕ: ೧೪/೦೧/೨೦೨೪",
+      grounded: true,
+      confidence: "high",
+      audioUrl: "/vaanisetu_answer.wav"
+    },
+    "hi-IN": {
+      answer: "इस आधिकारिक नोटिस के अनुसार, के.आर. पुरम तालुका के सुलीकेरे गांव में सड़क चौड़ीकरण परियोजना के लिए भूमि अधिग्रहण अधिनियम 2013 के तहत भूमि अधिग्रहण किया जा रहा है। भूमि मालिकों को आरटीसी (RTC/पट्टा), आधार कार्ड, बैंक पासबुक और पैन कार्ड की प्रतियां तालुका कार्यालय में जमा करनी होंगी। इस नोटिस में कोई विशिष्ट अंतिम तिथि नहीं दी गई है (नोटिस तिथि: 14/01/2024)।",
+      action: ["भूमि दस्तावेज़ (RTC/पट्टा)", "आधार कार्ड की प्रति", "बैंक पासबुक की प्रति", "PAN कार्ड की प्रति"],
+      deadline: "दस्तावेज़ में कोई अंतिम तिथि नहीं बताई गई है (अधिसूचना तिथि: 14/01/2024)",
+      evidence: "• भूमि और पट्टा (RTC) • आधार कार्ड प्रति • बैंक पासबुक प्रति • PAN कार्ड प्रति... दिनांक: 14/01/2024",
+      grounded: true,
+      confidence: "high",
+      audioUrl: null
+    },
+    "ta-IN": {
+      answer: "இந்த அறிவிப்பின்படி, கே.ஆர்.புரம் தாலுகா சூலிகெரே கிராமத்தில் சாலை விரிவாக்க திட்டத்திற்காக நிலம் கையகப்படுத்தப்படுகிறது. நில உரிமையாளர்கள் RTC நில ஆவணங்கள், ஆதார் அட்டை, வங்கி பாஸ்புக் மற்றும் PAN அட்டை நகல்களை தாலுகா அலுவலகத்தில் சமர்ப்பிக்க வேண்டும். இதில் குறிப்பிட்ட கடைசி தேதி எதுவும் குறிப்பிடப்படவில்லை (தேதி: 14/01/2024).",
+      action: ["RTC நில ஆவணங்கள்", "ஆதார் அட்டை நகல்", "வங்கி பாஸ்புக் நகல்", "PAN அட்டை நகல்"],
+      deadline: "சமர்ப்பிப்பதற்கான கடைசி தேதி குறிப்பிடப்படவில்லை (தேதி: 14/01/2024)",
+      evidence: "• RTC நில ஆவணம் • ஆதார் நகல் • வங்கி பாஸ்புக் நகல் • PAN நகல்... தேதி: 14/01/2024",
+      grounded: true,
+      confidence: "high",
+      audioUrl: null
+    },
+    "en-IN": {
+      answer: "According to this official notice, land acquisition is initiated under the Karnataka Land Acquisition Act 2013 for proposed road widening in Sulikere village (KR Puram Taluk). Landowners listed must submit RTC land records, Aadhaar card, Bank passbook, and PAN card copies to the Taluk office. Note: The notice is dated 14/01/2024, but no specific submission deadline date is stated in the document.",
+      action: ["RTC Land Records", "Aadhaar Card Copy", "Bank Passbook Copy", "PAN Card Copy"],
+      deadline: "No explicit submission deadline is stated in the document (Notice Date: 14/01/2024)",
+      evidence: "• RTC Land Record • Aadhaar Copy • Bank Passbook Copy • PAN Copy... Date: 14/01/2024",
+      grounded: true,
+      confidence: "high",
+      audioUrl: null
+    }
   };
 
-  const [currentAnswerData, setCurrentAnswerData] = useState(sampleAnswerData);
+  const [currentAnswerData, setCurrentAnswerData] = useState(sampleAnswersMap["kn-IN"]);
   const answerAudioRef = useRef(null);
   const questionAudioRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  // Sync sample question & answer when language changes
+  const handleLanguageChange = async (newCode) => {
+    setSelectedLanguageCode(newCode);
+    const newMeta = getLanguageMeta(newCode);
+
+    if (isSampleMode) {
+      setQuestionText(newMeta.sampleQuestion);
+      if (sampleAnswersMap[newCode]) {
+        setCurrentAnswerData(sampleAnswersMap[newCode]);
+      } else {
+        // Dynamically translate answer via API
+        try {
+          const res = await fetch('/api/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              text: sampleAnswersMap["kn-IN"].answer,
+              source_language: "kn-IN",
+              target_language: newCode
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setCurrentAnswerData({
+              ...sampleAnswersMap["kn-IN"],
+              answer: data.translated_text,
+              audioUrl: null
+            });
+          }
+        } catch (e) {
+          console.log("Translation error:", e);
+        }
+      }
+    } else {
+      setQuestionText(newMeta.placeholder);
+    }
+  };
 
   // Sync audio ref src when audioUrl changes
   useEffect(() => {
@@ -61,7 +132,7 @@ export default function App() {
     }
   }, [currentAnswerData?.audioUrl]);
 
-  // Handle Answer Audio Playback Progress
+  // Audio Playback Progress Listener
   useEffect(() => {
     const audio = answerAudioRef.current;
     if (!audio) return;
@@ -158,33 +229,30 @@ export default function App() {
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
     
-    // Clear question for user document unless user already typed one
-    if (questionText === sampleAnswerData.question || questionText.includes("ಈ ನೋಟಿಸ್ನಲ್ಲಿ")) {
-      setQuestionText("");
-    }
+    setQuestionText("");
     setCurrentAnswerData(null);
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileSelect(e.target.files[0] || e.dataTransfer.files[0]);
+      handleFileSelect(e.target.files[0]);
     }
   };
 
-  // Switch back to Sample Demo
+  // Restore Sample Demo
   const handleRestoreSample = () => {
     setIsSampleMode(true);
     setUploadedFile(null);
     setFileName('kannada.png');
     setFileType('image');
     setPreviewUrl('/kannada.png');
-    setQuestionText("ಈ ನೋಟಿಸ್ನಲ್ಲಿ ನಾನು ಏನು ಮಾಡಬೇಕು ಮತ್ತು ಕೊನೆಯ ದಿನಾಂಕ ಯಾವುದು?");
-    setCurrentAnswerData(sampleAnswerData);
+    setQuestionText(currentLang.sampleQuestion);
+    setCurrentAnswerData(sampleAnswersMap[selectedLanguageCode] || sampleAnswersMap["kn-IN"]);
     setAnalysisError(null);
   };
 
-  // Start New Upload
+  // Reset Upload
   const handleResetUpload = () => {
     setUploadedFile(null);
     setIsSampleMode(false);
@@ -216,11 +284,10 @@ export default function App() {
       setIsRecording(true);
     } catch (err) {
       console.error("Microphone access error:", err);
-      // Fallback toggle for demo if mic unavailable
       setIsRecording(true);
       setTimeout(() => {
         setIsRecording(false);
-        setQuestionText("ಈ ನೋಟಿಸ್ನಲ್ಲಿ ನಾನು ಏನು ಮಾಡಬೇಕು ಮತ್ತು ಕೊನೆಯ ದಿನಾಂಕ ಯಾವುದು?");
+        setQuestionText(currentLang.sampleQuestion);
       }, 2500);
     }
   };
@@ -240,7 +307,7 @@ export default function App() {
     try {
       const formData = new FormData();
       formData.append('audio', blob, 'recording.wav');
-      formData.append('language', 'kn-IN');
+      formData.append('language', selectedLanguageCode);
 
       const response = await fetch('/api/stt', {
         method: 'POST',
@@ -260,7 +327,7 @@ export default function App() {
     }
   };
 
-  // Execute Real Document AI + 105B + Bulbul Analysis via Backend API
+  // Execute Multilingual Document AI + 105B + Bulbul Analysis via Backend API
   const handleAnalyzeDocument = async () => {
     if (!questionText.trim()) {
       setAnalysisError("Please type or record a question first.");
@@ -271,19 +338,19 @@ export default function App() {
     setIsProcessing(true);
     setProcessingStage(1);
 
-    // If running in Sample mode without new upload, run fast simulated flow with real output data
+    // Fast simulated execution for sample mode if backend API is offline
     if (isSampleMode && !uploadedFile) {
-      setTimeout(() => setProcessingStage(2), 1000);
-      setTimeout(() => setProcessingStage(3), 2000);
+      setTimeout(() => setProcessingStage(2), 900);
+      setTimeout(() => setProcessingStage(3), 1800);
       setTimeout(() => {
         setIsProcessing(false);
-        setCurrentAnswerData(sampleAnswerData);
+        setCurrentAnswerData(sampleAnswersMap[selectedLanguageCode] || sampleAnswersMap["kn-IN"]);
         document.getElementById('answer-hero-card')?.scrollIntoView({ behavior: 'smooth' });
-      }, 2800);
+      }, 2500);
       return;
     }
 
-    // Real API Call for User Uploaded Document
+    // Real API Call for User Uploaded or Selected Document
     try {
       setProcessingStage(1); // Document AI OCR
       const formData = new FormData();
@@ -291,9 +358,9 @@ export default function App() {
         formData.append('document', uploadedFile);
       }
       formData.append('question', questionText);
-      formData.append('language', 'kn-IN');
+      formData.append('language', selectedLanguageCode);
 
-      setProcessingStage(2); // Sarvam 105B Reasoning
+      setProcessingStage(2); // Sarvam 105B Reasoning in Target Language
 
       const response = await fetch('/api/analyze', {
         method: 'POST',
@@ -305,7 +372,7 @@ export default function App() {
         throw new Error(errJson.detail || "Analysis request failed.");
       }
 
-      setProcessingStage(3); // Bulbul Voice Synthesis
+      setProcessingStage(3); // Bulbul Voice Synthesis in Target Language
 
       const data = await response.json();
 
@@ -317,8 +384,7 @@ export default function App() {
       }
 
       setCurrentAnswerData({
-        answer: data.answer || "No grounded answer returned.",
-        englishAnswer: null,
+        answer: data.answer || currentLang.notFoundText,
         action: actionList,
         deadline: data.deadline || "No explicit deadline mentioned in the document.",
         evidence: data.evidence || "Extract from uploaded document",
@@ -361,10 +427,12 @@ export default function App() {
       <div className="bg-forest-900/90 border-b border-forest-800/60 backdrop-blur-md py-2 px-4 text-xs font-mono text-center text-ivory-300 flex items-center justify-center gap-2 relative z-50">
         <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
         <span>Powered by <strong>Sarvam AI</strong> · Saaras STT + Sarvam 105B Grounded Reasoning + Bulbul TTS</span>
-        <span className="hidden md:inline-block bg-forest-800 px-2 py-0.5 rounded text-[10px] text-gold-400 border border-gold-500/20">Kannada kn-IN</span>
+        <span className="bg-forest-800 px-2 py-0.5 rounded text-[10px] text-gold-400 border border-gold-500/20 font-bold">
+          {currentLang.native} ({currentLang.code})
+        </span>
       </div>
 
-      {/* 2. NAVIGATION BAR */}
+      {/* 2. NAVIGATION BAR WITH LANGUAGE SELECTOR DROPDOWN */}
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-forest-950/80 border-b border-forest-800/50 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -383,19 +451,31 @@ export default function App() {
           </div>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-ivory-300">
+            <a href="#languages" className="hover:text-gold-400 transition-colors">Select Language</a>
             <a href="#demo" className="hover:text-gold-400 transition-colors">Interactive Demo</a>
             <a href="#how-it-works" className="hover:text-gold-400 transition-colors">How It Works</a>
-            <a href="#technology" className="hover:text-gold-400 transition-colors">Sarvam Stack</a>
           </nav>
 
+          {/* DYNAMIC LANGUAGE SELECTOR */}
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-forest-900 border border-forest-700/60 text-xs font-mono text-ivory-200">
-              <Languages className="w-3.5 h-3.5 text-gold-400" />
-              <span>Kannada (kn-IN)</span>
+            <div className="relative">
+              <select
+                value={selectedLanguageCode}
+                onChange={(e) => handleLanguageChange(e.target.value)}
+                className="appearance-none bg-forest-900 border border-gold-500/40 text-gold-400 font-semibold text-xs rounded-xl px-3 py-2 pr-8 focus:outline-none focus:border-gold-400 cursor-pointer shadow-sm"
+              >
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <option key={lang.code} value={lang.code} className="bg-forest-950 text-ivory-100">
+                    {lang.flag} {lang.native} ({lang.name})
+                  </option>
+                ))}
+              </select>
+              <Globe className="w-3.5 h-3.5 text-gold-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
+
             <a 
               href="#demo"
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-forest-950 font-semibold text-sm shadow-glow-gold transition-all duration-300 transform hover:-translate-y-0.5 flex items-center gap-1.5"
+              className="hidden sm:flex px-4 py-2 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-forest-950 font-semibold text-sm shadow-glow-gold transition-all duration-300 items-center gap-1.5"
             >
               <span>Try Demo</span>
               <ArrowRight className="w-4 h-4" />
@@ -404,113 +484,66 @@ export default function App() {
         </div>
       </header>
 
-      {/* 3. HERO SECTION */}
-      <section className="relative pt-16 pb-20 overflow-hidden z-10">
+      {/* 3. LANGUAGE SELECTION LANDING HERO SECTION */}
+      <section id="languages" className="relative pt-12 pb-16 overflow-hidden z-10 border-b border-forest-800/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-forest-900/80 border border-gold-500/30 text-gold-400 text-xs font-mono mb-6 shadow-sm">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Document + Voice + Grounded Indian AI</span>
+          <div className="text-center max-w-3xl mx-auto mb-10">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-forest-900/80 border border-gold-500/30 text-gold-400 text-xs font-mono mb-4 shadow-sm">
+              <Globe className="w-3.5 h-3.5" />
+              <span>Choose Your Preferred Indian Language</span>
             </div>
 
-            <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-ivory-50 mb-6 leading-[1.15]">
+            <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-ivory-50 mb-4 leading-tight">
               Understand every document. <br className="hidden sm:inline" />
               <span className="bg-gradient-to-r from-gold-400 via-ivory-100 to-emerald-400 bg-clip-text text-transparent">
-                In your language.
+                In {currentLang.name} ({currentLang.native}).
               </span>
             </h1>
 
-            <p className="text-lg sm:text-xl text-ivory-300 font-normal mb-8 leading-relaxed max-w-2xl mx-auto">
-              VaaniSetu turns complex official notices into clear, spoken answers — in the language you understand. Powered by Sarvam AI.
+            <p className="text-base sm:text-lg text-ivory-300 font-normal leading-relaxed max-w-2xl mx-auto">
+              VaaniSetu turns complex official documents into clear, spoken answers in the language you understand best.
             </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
-              <a 
-                href="#demo"
-                className="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-forest-950 font-bold text-base shadow-glow-gold transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center gap-2"
-              >
-                <span>Try VaaniSetu →</span>
-              </a>
-              <a 
-                href="#architecture"
-                className="w-full sm:w-auto px-7 py-4 rounded-xl bg-forest-900/80 border border-forest-700/80 hover:bg-forest-850 text-ivory-200 font-semibold text-base transition-all flex items-center justify-center gap-2"
-              >
-                <Layers className="w-4 h-4 text-gold-400" />
-                <span>View Architecture</span>
-              </a>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-ivory-400 font-mono">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Document AI OCR
-              </span>
-              <span className="w-1 h-1 rounded-full bg-forest-700" />
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Saaras Speech-to-Text
-              </span>
-              <span className="w-1 h-1 rounded-full bg-forest-700" />
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-gold-400" /> Sarvam 105B Grounded
-              </span>
-              <span className="w-1 h-1 rounded-full bg-forest-700" />
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Bulbul Voice Output
-              </span>
-            </div>
           </div>
 
-          {/* HERO ARCHITECTURE CARD SHOWCASE (DOCUMENT -> VOICE -> ANSWER) */}
-          <div id="architecture" className="max-w-5xl mx-auto forest-glass rounded-2xl p-6 sm:p-8 shadow-premium border border-gold-500/20 relative">
-            <div className="text-center mb-6">
-              <p className="text-xs font-mono uppercase tracking-widest text-gold-400">Intelligent Flow</p>
-              <h3 className="font-serif text-xl sm:text-2xl text-ivory-100 font-bold mt-1">DOCUMENT → VOICE → GROUNDED ANSWER</h3>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-              <div className="hidden md:block absolute top-1/2 left-[30%] w-[7%] h-[2px] bg-gradient-to-r from-forest-600 to-gold-500/50 -translate-y-1/2 z-0" />
-              <div className="hidden md:block absolute top-1/2 left-[63%] w-[7%] h-[2px] bg-gradient-to-r from-gold-500/50 to-emerald-400 -translate-y-1/2 z-0" />
-
-              <div className="bg-forest-900/90 rounded-xl p-5 border border-forest-700/80 relative z-10 hover:border-gold-500/40 transition-all group">
-                <div className="w-10 h-10 rounded-lg bg-forest-800 flex items-center justify-center mb-4 text-gold-400 group-hover:scale-110 transition-transform">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div className="text-xs font-mono text-gold-400 mb-1">01. Sarvam Doc AI</div>
-                <h4 className="font-semibold text-ivory-100 mb-2">Upload Notice / Photo</h4>
-                <p className="text-xs text-ivory-300 line-clamp-2">Digitizes government notices, survey numbers, dates & tables in Kannada.</p>
-              </div>
-
-              <div className="bg-forest-900/90 rounded-xl p-5 border border-gold-500/40 relative z-10 shadow-glow-gold/20 hover:border-gold-400 transition-all group">
-                <div className="w-10 h-10 rounded-lg bg-gold-500/20 flex items-center justify-center mb-4 text-gold-400 group-hover:scale-110 transition-transform">
-                  <Mic className="w-5 h-5" />
-                </div>
-                <div className="text-xs font-mono text-gold-400 mb-1">02. Saaras v4 STT</div>
-                <h4 className="font-semibold text-ivory-100 mb-2 font-kannada">ಕನ್ನಡ voice question</h4>
-                <p className="text-xs text-ivory-300 line-clamp-2">High-accuracy Indian language speech-to-text conversion.</p>
-              </div>
-
-              <div className="bg-forest-900/90 rounded-xl p-5 border border-emerald-500/40 relative z-10 hover:border-emerald-400 transition-all group">
-                <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center mb-4 text-emerald-400 group-hover:scale-110 transition-transform">
-                  <Volume2 className="w-5 h-5" />
-                </div>
-                <div className="text-xs font-mono text-emerald-400 mb-1">03. Sarvam 105B + Bulbul</div>
-                <h4 className="font-semibold text-ivory-100 mb-2">Grounded Audio Answer</h4>
-                <p className="text-xs text-ivory-300 line-clamp-2">Strict document-grounded reasoning spoken back clearly.</p>
-              </div>
-            </div>
+          {/* 10-LANGUAGE SELECTION CARDS GRID */}
+          <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-5 gap-3">
+            {SUPPORTED_LANGUAGES.map((lang) => {
+              const isSelected = lang.code === selectedLanguageCode;
+              return (
+                <button
+                  key={lang.code}
+                  onClick={() => handleLanguageChange(lang.code)}
+                  className={`p-3.5 rounded-xl border text-center transition-all duration-300 flex flex-col items-center justify-center gap-1.5 group ${
+                    isSelected 
+                      ? 'bg-gradient-to-b from-forest-850 to-forest-900 border-gold-400 shadow-glow-gold scale-105' 
+                      : 'bg-forest-900/60 border-forest-800 hover:border-gold-500/40 hover:bg-forest-850'
+                  }`}
+                >
+                  <span className="text-lg">{lang.flag}</span>
+                  <span className={`font-serif text-base font-bold ${isSelected ? 'text-gold-400' : 'text-ivory-100 group-hover:text-gold-400'}`}>
+                    {lang.native}
+                  </span>
+                  <span className="text-[11px] font-mono text-ivory-400">{lang.name}</span>
+                  {isSelected && (
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 mt-1 animate-ping" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* 4. MAIN INTERACTIVE DEMO SECTION */}
-      <section id="demo" className="py-20 relative z-10 bg-forest-900/40 border-t border-b border-forest-800/60">
+      <section id="demo" className="py-16 relative z-10 bg-forest-900/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-center max-w-2xl mx-auto mb-12">
             <span className="text-xs font-mono uppercase tracking-widest text-gold-400 bg-forest-900 px-3 py-1 rounded-full border border-gold-500/20">
-              {isSampleMode ? "Sample Demo Mode" : "User Document Prototype Mode"}
+              Active Language: {currentLang.name} ({currentLang.native})
             </span>
-            <h2 className="font-serif text-3xl sm:text-5xl font-bold text-ivory-50 mt-4 mb-4">Let's understand your document.</h2>
-            <p className="text-ivory-300 text-base sm:text-lg">Upload a document or try our built-in Kannada sample notice.</p>
+            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-ivory-50 mt-3 mb-2">Let's understand your document.</h2>
+            <p className="text-ivory-300 text-sm sm:text-base">Upload any official document and ask questions in {currentLang.native}.</p>
           </div>
 
           {/* ERROR ALERT NOTIFICATION */}
@@ -553,7 +586,6 @@ export default function App() {
                 className="relative rounded-xl overflow-hidden bg-forest-950/80 border-2 border-dashed border-forest-700/80 p-4 text-center group hover:border-gold-500/50 transition-colors"
               >
                 
-                {/* Hidden File Input */}
                 <input 
                   ref={fileInputRef}
                   type="file" 
@@ -562,12 +594,10 @@ export default function App() {
                   onChange={(e) => handleFileSelect(e.target.files[0])}
                 />
 
-                {/* Scanner Beam Overlay when reading */}
                 {isProcessing && (
                   <div className="scanner-line z-20" />
                 )}
 
-                {/* Preview Display: Sample or Uploaded */}
                 {previewUrl ? (
                   <div className="relative rounded-lg overflow-hidden bg-forest-900/90 border border-forest-800 mb-4 min-h-[220px] flex items-center justify-center">
                     {fileType === 'pdf' ? (
@@ -591,7 +621,7 @@ export default function App() {
                         <span className="text-xs font-semibold text-ivory-100 font-mono truncate max-w-[180px] block">{fileName}</span>
                       </div>
                       <span className="px-2 py-1 bg-forest-950/90 rounded text-[10px] font-mono text-emerald-400 border border-emerald-500/30">
-                        {isSampleMode ? "Sample Mode" : "User Document"}
+                        {isSampleMode ? "Sample Notice" : "User Document"}
                       </span>
                     </div>
                   </div>
@@ -606,7 +636,6 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Status Indicator Bar */}
                 <div className="flex items-center justify-between px-3 py-2.5 bg-forest-900 rounded-lg border border-forest-800 text-xs font-mono">
                   <div className="flex items-center gap-2 truncate">
                     {isProcessing ? (
@@ -615,18 +644,16 @@ export default function App() {
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                     )}
                     <span className="text-ivory-200 truncate">
-                      {isSampleMode ? "✓ Demo document ready (kannada.png)" : `✓ Document ready (${fileName})`}
+                      {isSampleMode ? "✓ Demo document ready" : `✓ Document ready (${fileName})`}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="text-[11px] text-gold-400 hover:underline font-semibold"
-                    >
-                      Change
-                    </button>
-                  </div>
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-[11px] text-gold-400 hover:underline font-semibold shrink-0"
+                  >
+                    Change
+                  </button>
                 </div>
 
                 {!isSampleMode && (
@@ -647,18 +674,18 @@ export default function App() {
               <div className="flex items-center justify-between mb-6 pb-3 border-b border-forest-800">
                 <div className="flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-gold-500/20 text-gold-400 text-xs font-mono flex items-center justify-center font-bold">02</span>
-                  <h3 className="font-serif font-bold text-lg text-ivory-100">Ask in your language</h3>
+                  <h3 className="font-serif font-bold text-lg text-ivory-100">Ask in {currentLang.native}</h3>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs font-mono text-gold-400 bg-gold-500/10 px-2.5 py-1 rounded-full border border-gold-500/20">
                   <Languages className="w-3.5 h-3.5" />
-                  <span>Kannada · kn-IN</span>
+                  <span>{currentLang.name} ({currentLang.code})</span>
                 </div>
               </div>
 
               {/* VOICE INTERACTION HERO CARD */}
               <div className="bg-forest-950/80 rounded-xl p-6 border border-forest-800 mb-6 text-center relative overflow-hidden">
                 <p className="text-xs text-ivory-400 font-mono mb-4 uppercase tracking-wider">
-                  {isRecording ? "Listening... Speak in Kannada" : "Tap microphone to speak"}
+                  {isRecording ? `Listening... Speak in ${currentLang.name}` : `Tap microphone to speak (${currentLang.native})`}
                 </p>
 
                 {/* Big Glowing Microphone Button */}
@@ -690,40 +717,39 @@ export default function App() {
                   ))}
                 </div>
 
-                {/* Question Audio Sample Playback Button */}
-                {isSampleMode && (
+                {isSampleMode && selectedLanguageCode === 'kn-IN' && (
                   <button 
                     onClick={toggleQuestionAudio}
                     className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-forest-900 border border-forest-700 hover:border-gold-500/40 text-xs font-mono text-ivory-200 transition-colors"
                   >
                     {isPlayingQuestion ? <Pause className="w-3.5 h-3.5 text-gold-400" /> : <Play className="w-3.5 h-3.5 text-gold-400" />}
-                    <span>Listen to sample question (question.wav)</span>
+                    <span>Listen to sample audio (question.wav)</span>
                   </button>
                 )}
               </div>
 
               {/* QUESTION INPUT & PRESET CHIP */}
               <div className="space-y-3">
-                <label className="text-xs font-mono text-ivory-300 block">Question for Document AI:</label>
+                <label className="text-xs font-mono text-ivory-300 block">Question in {currentLang.name} ({currentLang.native}):</label>
                 <div className="relative">
                   <input 
                     type="text"
                     value={questionText}
                     onChange={(e) => setQuestionText(e.target.value)}
-                    placeholder={isSampleMode ? "Ask something about this notice..." : "Ask something about your document..."}
-                    className="w-full bg-forest-950 border border-forest-700 rounded-xl px-4 py-3 text-ivory-100 font-kannada text-sm focus:outline-none focus:border-gold-500/80 transition-colors"
+                    placeholder={currentLang.placeholder}
+                    className="w-full bg-forest-950 border border-forest-700 rounded-xl px-4 py-3 text-ivory-100 font-sans text-sm focus:outline-none focus:border-gold-500/80 transition-colors"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-gold-400 bg-forest-900 px-2 py-0.5 rounded border border-gold-500/20">Saaras v4</span>
                 </div>
 
                 {isSampleMode && (
                   <div className="flex items-center gap-2 pt-1">
-                    <span className="text-[11px] font-mono text-ivory-400">Sample:</span>
+                    <span className="text-[11px] font-mono text-ivory-400">Sample ({currentLang.native}):</span>
                     <button 
-                      onClick={() => setQuestionText("ಈ ನೋಟಿಸ್ನಲ್ಲಿ ನಾನು ಏನು ಮಾಡಬೇಕು ಮತ್ತು ಕೊನೆಯ ದಿನಾಂಕ ಯಾವುದು?")}
-                      className="text-xs font-kannada text-gold-400 hover:underline bg-forest-900/60 px-2.5 py-1 rounded border border-forest-800"
+                      onClick={() => setQuestionText(currentLang.sampleQuestion)}
+                      className="text-xs text-gold-400 hover:underline bg-forest-900/60 px-2.5 py-1 rounded border border-forest-800 text-left"
                     >
-                      "ಈ ನೋಟಿಸ್ನಲ್ಲಿ ನಾನು ಏನು ಮಾಡಬೇಕು ಮತ್ತು ಕೊನೆಯ ದಿನಾಂಕ ಯಾವುದು?"
+                      "{currentLang.sampleQuestion}"
                     </button>
                   </div>
                 )}
@@ -737,12 +763,12 @@ export default function App() {
                   {isProcessing ? (
                     <>
                       <RefreshCw className="w-5 h-5 animate-spin" />
-                      <span>Analyzing with Sarvam AI...</span>
+                      <span>Analyzing in {currentLang.name}...</span>
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-5 h-5" />
-                      <span>{isSampleMode ? "Ask VaaniSetu" : "Analyze this document"}</span>
+                      <span>Ask VaaniSetu ({currentLang.native})</span>
                     </>
                   )}
                 </button>
@@ -756,7 +782,7 @@ export default function App() {
             <div className="mt-10 max-w-4xl mx-auto forest-glass rounded-2xl p-6 border border-gold-500/40 shadow-glow-gold/20 text-center animate-pulse">
               <div className="flex items-center justify-center gap-3 mb-4">
                 <Cpu className="w-6 h-6 text-gold-400 animate-spin" />
-                <h4 className="font-serif text-xl font-bold text-ivory-50">Sarvam AI Pipeline Active</h4>
+                <h4 className="font-serif text-xl font-bold text-ivory-50">Sarvam Multilingual Pipeline</h4>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-mono">
@@ -764,10 +790,10 @@ export default function App() {
                   1. Sarvam Doc AI OCR...
                 </div>
                 <div className={`p-3 rounded-lg border transition-colors ${processingStage >= 2 ? 'bg-forest-900 border-gold-500/50 text-gold-400' : 'bg-forest-950 border-forest-800 text-ivory-400'}`}>
-                  2. Sarvam 105B Reasoning...
+                  2. Sarvam 105B Reasoning ({currentLang.name})...
                 </div>
                 <div className={`p-3 rounded-lg border transition-colors ${processingStage >= 3 ? 'bg-forest-900 border-emerald-500/50 text-emerald-400' : 'bg-forest-950 border-forest-800 text-ivory-400'}`}>
-                  3. Bulbul Voice Output ✓
+                  3. Bulbul Voice Output ({currentLang.native}) ✓
                 </div>
               </div>
             </div>
@@ -777,7 +803,7 @@ export default function App() {
           {currentAnswerData && !isProcessing && (
             <div id="answer-hero-card" className="mt-12 max-w-5xl mx-auto space-y-8 animate-fadeIn">
               
-              {/* MAIN KANNADA ANSWER CARD */}
+              {/* MAIN MULTILINGUAL ANSWER CARD */}
               <div className="forest-glass rounded-2xl p-8 border-2 border-gold-500/40 shadow-premium relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-48 h-48 bg-gold-500/10 rounded-full blur-2xl pointer-events-none" />
 
@@ -788,78 +814,68 @@ export default function App() {
                       V
                     </div>
                     <div>
-                      <h3 className="font-serif font-bold text-xl text-ivory-50">VaaniSetu says</h3>
+                      <h3 className="font-serif font-bold text-xl text-ivory-50">VaaniSetu says ({currentLang.native})</h3>
                       <span className="text-xs font-mono text-emerald-400">
-                        {currentAnswerData.grounded ? "✓ Strictly Grounded in Document" : "⚠️ Low Grounding Confidence"}
+                        {currentAnswerData.grounded ? "✓ Grounded in Document" : "⚠️ Low Grounding Confidence"}
                       </span>
                     </div>
                   </div>
-
-                  {currentAnswerData.englishAnswer && (
-                    <button 
-                      onClick={() => setShowEnglishTranslation(!showEnglishTranslation)}
-                      className="text-xs font-mono px-3 py-1.5 rounded-lg bg-forest-900 border border-forest-700 hover:border-gold-500/40 text-gold-400 transition-colors"
-                    >
-                      {showEnglishTranslation ? "Show Original Kannada" : "Translate to English"}
-                    </button>
-                  )}
                 </div>
 
-                {/* Text Content */}
+                {/* Text Content in Selected Language */}
                 <div className="prose prose-invert max-w-none">
-                  <p className="font-kannada text-lg sm:text-xl text-ivory-50 leading-relaxed font-normal bg-forest-950/60 p-6 rounded-xl border border-forest-800">
-                    {showEnglishTranslation && currentAnswerData.englishAnswer ? currentAnswerData.englishAnswer : currentAnswerData.answer}
+                  <p className="text-lg sm:text-xl text-ivory-50 leading-relaxed font-normal bg-forest-950/60 p-6 rounded-xl border border-forest-800">
+                    {currentAnswerData.answer}
                   </p>
                 </div>
 
                 {/* Audio Output Player Section */}
-                {currentAnswerData.audioUrl && (
-                  <div className="mt-8 pt-6 border-t border-forest-800">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={toggleAnswerAudio}
-                          className="w-12 h-12 rounded-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-forest-950 flex items-center justify-center shadow-glow-gold transition-transform hover:scale-105"
-                        >
-                          {isPlayingAnswer ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
-                        </button>
-                        <div>
-                          <h4 className="font-serif font-bold text-ivory-100 text-base">Listen to your answer</h4>
-                          <p className="text-xs text-gold-400 font-mono">Sarvam Bulbul TTS Voice (kn-IN)</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-xs font-mono text-ivory-400">
-                        <span>Speed:</span>
-                        {[0.8, 1, 1.2].map((rate) => (
-                          <button 
-                            key={rate}
-                            onClick={() => handlePlaybackRateChange(rate)}
-                            className={`px-2 py-0.5 rounded ${playbackRate === rate ? 'bg-gold-500 text-forest-950 font-bold' : 'bg-forest-900 text-ivory-300'}`}
-                          >
-                            {rate}x
-                          </button>
-                        ))}
+                <div className="mt-8 pt-6 border-t border-forest-800">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={toggleAnswerAudio}
+                        disabled={!currentAnswerData.audioUrl}
+                        className="w-12 h-12 rounded-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-forest-950 flex items-center justify-center shadow-glow-gold transition-transform hover:scale-105 disabled:opacity-50"
+                      >
+                        {isPlayingAnswer ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
+                      </button>
+                      <div>
+                        <h4 className="font-serif font-bold text-ivory-100 text-base">{currentLang.listenLabel}</h4>
+                        <p className="text-xs text-gold-400 font-mono">Sarvam Bulbul Voice ({currentLang.name})</p>
                       </div>
                     </div>
 
-                    {/* Audio Progress Slider */}
-                    <div className="space-y-1">
-                      <input 
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={audioProgress}
-                        onChange={handleAudioScrub}
-                        className="w-full h-2 bg-forest-900 rounded-lg appearance-none cursor-pointer accent-gold-500"
-                      />
-                      <div className="flex items-center justify-between text-xs font-mono text-ivory-400">
-                        <span>{formatTime(audioCurrentTime)}</span>
-                        <span>{formatTime(audioDuration || 12)}</span>
-                      </div>
+                    <div className="flex items-center gap-2 text-xs font-mono text-ivory-400">
+                      <span>Speed:</span>
+                      {[0.8, 1, 1.2].map((rate) => (
+                        <button 
+                          key={rate}
+                          onClick={() => handlePlaybackRateChange(rate)}
+                          className={`px-2 py-0.5 rounded ${playbackRate === rate ? 'bg-gold-500 text-forest-950 font-bold' : 'bg-forest-900 text-ivory-300'}`}
+                        >
+                          {rate}x
+                        </button>
+                      ))}
                     </div>
                   </div>
-                )}
+
+                  {/* Audio Progress Slider */}
+                  <div className="space-y-1">
+                    <input 
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={audioProgress}
+                      onChange={handleAudioScrub}
+                      className="w-full h-2 bg-forest-900 rounded-lg appearance-none cursor-pointer accent-gold-500"
+                    />
+                    <div className="flex items-center justify-between text-xs font-mono text-ivory-400">
+                      <span>{formatTime(audioCurrentTime)}</span>
+                      <span>{formatTime(audioDuration || 12)}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* STRUCTURED ANSWER GRID (ACTION, DEADLINE, EVIDENCE) */}
@@ -869,11 +885,11 @@ export default function App() {
                 <div className="forest-glass rounded-xl p-6 border border-forest-700/80">
                   <div className="flex items-center gap-2 text-gold-400 font-mono text-xs uppercase tracking-wider mb-3">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span>Action Required</span>
+                    <span>Required Actions</span>
                   </div>
-                  <h4 className="font-serif font-bold text-ivory-100 text-lg mb-3">Required Actions</h4>
+                  <h4 className="font-serif font-bold text-ivory-100 text-lg mb-3">Actions ({currentLang.native})</h4>
                   {Array.isArray(currentAnswerData.action) && currentAnswerData.action.length > 0 ? (
-                    <ul className="space-y-2 text-xs font-kannada text-ivory-200">
+                    <ul className="space-y-2 text-xs text-ivory-200">
                       {currentAnswerData.action.map((act, idx) => (
                         <li key={idx} className="flex items-center gap-2 bg-forest-900/60 p-2 rounded border border-forest-800">
                           <span className="w-1.5 h-1.5 rounded-full bg-gold-400 shrink-0" />
@@ -882,7 +898,7 @@ export default function App() {
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-xs text-ivory-300">{currentAnswerData.action || "No explicit action stated in document."}</p>
+                    <p className="text-xs text-ivory-300">{currentAnswerData.action || "No explicit action required."}</p>
                   )}
                 </div>
 
@@ -893,7 +909,7 @@ export default function App() {
                     <span>Submission Deadline</span>
                   </div>
                   <h4 className="font-serif font-bold text-ivory-100 text-lg mb-2">Deadline Status</h4>
-                  <p className="text-xs text-ivory-300 leading-relaxed mb-4 font-kannada">
+                  <p className="text-xs text-ivory-300 leading-relaxed mb-4">
                     {currentAnswerData.deadline || "No specific deadline stated in document."}
                   </p>
                 </div>
@@ -905,9 +921,9 @@ export default function App() {
                     <span>Grounding Evidence</span>
                   </div>
                   <h4 className="font-serif font-bold text-ivory-100 text-lg mb-2">Document Excerpt</h4>
-                  <div className="p-3 rounded-lg bg-forest-950/90 border border-forest-800 font-kannada text-xs text-ivory-300 italic space-y-1">
+                  <div className="p-3 rounded-lg bg-forest-950/90 border border-forest-800 text-xs text-ivory-300 italic space-y-1">
                     <p>"{currentAnswerData.evidence}"</p>
-                    <p className="text-[10px] text-gold-400 font-mono not-italic mt-2">Source: Uploaded Document Analysis</p>
+                    <p className="text-[10px] text-gold-400 font-mono not-italic mt-2">Source: Document Analysis</p>
                   </div>
                 </div>
 
@@ -932,17 +948,17 @@ export default function App() {
       <section id="how-it-works" className="py-20 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-xs font-mono uppercase tracking-widest text-gold-400">Architecture</span>
+            <span className="text-xs font-mono uppercase tracking-widest text-gold-400">Multilingual Architecture</span>
             <h2 className="font-serif text-3xl sm:text-4xl font-bold text-ivory-50 mt-2">How VaaniSetu Works</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
             {[
-              { step: "01", title: "Upload Document", desc: "User uploads official paper notice, photo, or PDF." },
-              { step: "02", title: "Sarvam Doc AI", desc: "OCR digitizes Kannada text, layout, and tables." },
-              { step: "03", title: "Saaras Voice AI", desc: "User asks question by voice; converted via saaras:v4." },
-              { step: "04", title: "Sarvam 105B", desc: "Grounded reasoning model yields strict factual answer." },
-              { step: "05", title: "Bulbul Speech", desc: "Converts Kannada answer back to natural spoken voice." },
+              { step: "01", title: "Upload Document", desc: "Upload official paper notice, photo, or PDF in any language." },
+              { step: "02", title: "Sarvam Doc AI", desc: "OCR digitizes document text, layout, and tables." },
+              { step: "03", title: "Saaras Voice AI", desc: "Ask question by voice in your chosen Indian language." },
+              { step: "04", title: "Sarvam 105B", desc: "Grounded reasoning model yields strict factual answer in your language." },
+              { step: "05", title: "Bulbul Speech", desc: "Converts answer back to natural spoken voice in your language." },
             ].map((item, idx) => (
               <div key={idx} className="forest-glass rounded-xl p-5 border border-forest-700/60 relative group hover:border-gold-500/40 transition-colors">
                 <div className="text-2xl font-serif font-bold text-gold-500/40 group-hover:text-gold-400 transition-colors mb-2">{item.step}</div>
@@ -972,19 +988,19 @@ export default function App() {
             <div className="forest-glass rounded-xl p-6 border border-forest-700/60">
               <Mic className="w-8 h-8 text-gold-400 mb-3" />
               <h4 className="font-serif font-bold text-lg text-ivory-100 mb-1">Saaras STT</h4>
-              <p className="text-xs text-ivory-300">State-of-the-art speech recognition tuned for Indian regional accents and dialects.</p>
+              <p className="text-xs text-ivory-300">Speech recognition tuned for 10+ Indian regional languages and accents.</p>
             </div>
 
             <div className="forest-glass rounded-xl p-6 border border-forest-700/60">
               <Cpu className="w-8 h-8 text-gold-400 mb-3" />
               <h4 className="font-serif font-bold text-lg text-ivory-100 mb-1">Sarvam 105B</h4>
-              <p className="text-xs text-ivory-300">Large-scale reasoning model tuned for strict document grounding and zero hallucination.</p>
+              <p className="text-xs text-ivory-300">Large-scale reasoning model tuned for strict document grounding in Indian languages.</p>
             </div>
 
             <div className="forest-glass rounded-xl p-6 border border-forest-700/60">
               <Volume2 className="w-8 h-8 text-gold-400 mb-3" />
               <h4 className="font-serif font-bold text-lg text-ivory-100 mb-1">Bulbul TTS</h4>
-              <p className="text-xs text-ivory-300">Natural sounding, expressive text-to-speech synthesis in Kannada and 10+ languages.</p>
+              <p className="text-xs text-ivory-300">Expressive text-to-speech synthesis in Kannada, Hindi, Tamil, Telugu, and more.</p>
             </div>
           </div>
         </div>
@@ -998,7 +1014,7 @@ export default function App() {
               <span className="font-serif text-xl font-bold text-ivory-50">VaaniSetu</span>
               <span className="font-kannada text-xs text-gold-400">ವಾಣಿ ಸೇತು</span>
             </div>
-            <p className="text-xs text-ivory-400">Understand. Ask. Listen.</p>
+            <p className="text-xs text-ivory-400">Understand. Ask. Listen. — In Your Language.</p>
           </div>
 
           <div className="text-xs font-mono text-ivory-400">
