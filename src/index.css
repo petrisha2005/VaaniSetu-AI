@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --forest-deep: #081A13;
+    --forest-rich: #0C261D;
+    --forest-card: #13382B;
+    --gold-accent: #D4A359;
+    --ivory-main: #F9F5EC;
+  }
+
+  body {
+    background-color: var(--forest-deep);
+    color: var(--ivory-main);
+    overflow-x: hidden;
+  }
+}
+
+/* Paper Grain Texture */
+.bg-paper-pattern {
+  background-image: radial-gradient(rgba(212, 163, 89, 0.08) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.noise-overlay {
+  background: radial-gradient(circle at 50% 0%, rgba(30, 88, 69, 0.35) 0%, transparent 70%);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #081A13;
+}
+::-webkit-scrollbar-thumb {
+  background: #1E5845;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #27755C;
+}
+
+/* Kannada Readability */
+.kannada-text {
+  font-family: 'Noto Sans Kannada', 'Inter', sans-serif;
+  line-height: 1.8;
+  letter-spacing: 0.01em;
+}
+
+/* Glassmorphism Card (subtle, non-generic) */
+.forest-glass {
+  background: rgba(17, 51, 39, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(212, 163, 89, 0.18);
+}
+
+.forest-glass-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.forest-glass-hover:hover {
+  border-color: rgba(212, 163, 89, 0.4);
+  box-shadow: 0 10px 30px -10px rgba(12, 38, 29, 0.8), 0 0 20px -5px rgba(212, 163, 89, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Scanning Line Effect */
+.scanner-line {
+  position: absolute;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #D4A359, #339777, transparent);
+  box-shadow: 0 0 15px #D4A359, 0 0 25px #339777;
+  animation: scan-vertical 2.2s ease-in-out infinite alternate;
+}
+
+@keyframes scan-vertical {
+  0% { top: 2%; opacity: 0.8; }
+  50% { opacity: 1; }
+  100% { top: 96%; opacity: 0.8; }
+}
+
+/* Audio Waveform animation */
+.wave-bar {
+  animation: wave-motion 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes wave-motion {
+  0% { transform: scaleY(0.25); }
+  100% { transform: scaleY(1); }
+}
+
+.wave-bar:nth-child(1) { animation-delay: 0.1s; }
+.wave-bar:nth-child(2) { animation-delay: 0.3s; }
+.wave-bar:nth-child(3) { animation-delay: 0.2s; }
+.wave-bar:nth-child(4) { animation-delay: 0.4s; }
+.wave-bar:nth-child(5) { animation-delay: 0.15s; }
+.wave-bar:nth-child(6) { animation-delay: 0.35s; }
