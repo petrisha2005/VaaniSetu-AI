@@ -1,12 +1,15 @@
 {
   "kn-IN": {
     "name": "Kannada",
-    "status": "PASS",
-    "stt": true,
-    "llm": true,
-    "tts": true,
-    "audio_fetch": true,
-    "errors": []
+    "status": "FAIL",
+    "stt": false,
+    "llm": false,
+    "tts": false,
+    "audio_fetch": false,
+    "errors": [
+      "STT Exception: HTTPConnectionPool(host='127.0.0.1', port=8000): Read timed out. (read timeout=30)",
+      "Analyze Exception: HTTPConnectionPool(host='127.0.0.1', port=8000): Read timed out. (read timeout=60)"
+    ]
   },
   "hi-IN": {
     "name": "Hindi",
@@ -19,26 +22,21 @@
   },
   "ta-IN": {
     "name": "Tamil",
-    "status": "PARTIAL",
+    "status": "PASS",
     "stt": true,
-    "llm": false,
-    "tts": false,
-    "audio_fetch": false,
-    "errors": [
-      "Analyze API returned 500: {\"detail\":\"Analysis failed: The read operation timed out\"}"
-    ]
+    "llm": true,
+    "tts": true,
+    "audio_fetch": true,
+    "errors": []
   },
   "te-IN": {
     "name": "Telugu",
-    "status": "FAIL",
-    "stt": false,
-    "llm": false,
-    "tts": false,
-    "audio_fetch": false,
-    "errors": [
-      "STT Exception: The read operation timed out",
-      "Analyze API returned 500: {\"detail\":\"Analysis failed: [Errno 8] nodename nor servname provided, or not known\"}"
-    ]
+    "status": "PASS",
+    "stt": true,
+    "llm": true,
+    "tts": true,
+    "audio_fetch": true,
+    "errors": []
   },
   "ml-IN": {
     "name": "Malayalam",
@@ -51,61 +49,47 @@
   },
   "mr-IN": {
     "name": "Marathi",
-    "status": "PARTIAL",
+    "status": "PASS",
     "stt": true,
-    "llm": false,
-    "tts": false,
-    "audio_fetch": false,
-    "errors": [
-      "Analyze API returned 500: {\"detail\":\"Analysis failed: The read operation timed out\"}"
-    ]
+    "llm": true,
+    "tts": true,
+    "audio_fetch": true,
+    "errors": []
   },
   "bn-IN": {
     "name": "Bengali",
-    "status": "FAIL",
-    "stt": false,
-    "llm": false,
-    "tts": false,
-    "audio_fetch": false,
-    "errors": [
-      "STT Exception: _ssl.c:983: The handshake operation timed out",
-      "Analyze API returned 500: {\"detail\":\"Analysis failed: [Errno 8] nodename nor servname provided, or not known\"}"
-    ]
+    "status": "PASS",
+    "stt": true,
+    "llm": true,
+    "tts": true,
+    "audio_fetch": true,
+    "errors": []
   },
   "gu-IN": {
     "name": "Gujarati",
-    "status": "FAIL",
-    "stt": false,
-    "llm": false,
-    "tts": false,
-    "audio_fetch": false,
-    "errors": [
-      "STT Exception: [Errno 8] nodename nor servname provided, or not known",
-      "Analyze API returned 500: {\"detail\":\"Analysis failed: [Errno 8] nodename nor servname provided, or not known\"}"
-    ]
+    "status": "PASS",
+    "stt": true,
+    "llm": true,
+    "tts": true,
+    "audio_fetch": true,
+    "errors": []
   },
   "pa-IN": {
     "name": "Punjabi",
-    "status": "FAIL",
-    "stt": false,
-    "llm": false,
-    "tts": false,
-    "audio_fetch": false,
-    "errors": [
-      "STT Exception: [Errno 8] nodename nor servname provided, or not known",
-      "Analyze API returned 500: {\"detail\":\"Analysis failed: [Errno 8] nodename nor servname provided, or not known\"}"
-    ]
+    "status": "PASS",
+    "stt": true,
+    "llm": true,
+    "tts": true,
+    "audio_fetch": true,
+    "errors": []
   },
   "en-IN": {
     "name": "English",
-    "status": "FAIL",
-    "stt": false,
-    "llm": false,
-    "tts": false,
-    "audio_fetch": false,
-    "errors": [
-      "STT Exception: [Errno 8] nodename nor servname provided, or not known",
-      "Analyze API returned 500: {\"detail\":\"Analysis failed: [Errno 8] nodename nor servname provided, or not known\"}"
-    ]
+    "status": "PASS",
+    "stt": true,
+    "llm": true,
+    "tts": true,
+    "audio_fetch": true,
+    "errors": []
   }
 }

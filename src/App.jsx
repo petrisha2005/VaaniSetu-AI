@@ -266,48 +266,75 @@ export default function App() {
 
   // Live Browser Microphone Recording -> Sarvam Saaras STT API
   const startRecording = async () => {
+    setAnalysisError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
+      
+      let options = {};
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        options = { mimeType: 'audio/webm;codecs=opus' };
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        options = { mimeType: 'audio/webm' };
+      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        options = { mimeType: 'audio/mp4' };
+      }
+
+      mediaRecorderRef.current = new MediaRecorder(stream, options);
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
-        if (event.data.size > 0) audioChunksRef.current.push(event.data);
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        await sendAudioToSTT(audioBlob);
+        const mimeType = mediaRecorderRef.current.mimeType || 'audio/webm';
+        const extension = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        await sendAudioToSTT(audioBlob, extension, mimeType);
       };
 
       mediaRecorderRef.current.start();
       setIsRecording(true);
     } catch (err) {
       console.error("Microphone access error:", err);
-      setIsRecording(true);
-      setTimeout(() => {
-        setIsRecording(false);
-        setQuestionText(currentLang.sampleQuestion);
-      }, 2500);
+      setIsRecording(false);
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setAnalysisError("Microphone permission denied. Please allow microphone access in browser settings.");
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        setAnalysisError("No microphone device found on this system.");
+      } else {
+        setAnalysisError(`Microphone error: ${err.message || 'Could not access microphone'}`);
+      }
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      if (mediaRecorderRef.current.stream) {
+        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      }
       setIsRecording(false);
     } else {
       setIsRecording(false);
     }
   };
 
-  const sendAudioToSTT = async (blob) => {
+  const sendAudioToSTT = async (blob, extension, mimeType) => {
     setIsTranscribing(true);
+    setAnalysisError(null);
     try {
+      if (blob.size < 100) {
+        setAnalysisError("Recorded audio is too short. Please speak clearly and try again.");
+        return;
+      }
+
       const formData = new FormData();
-      formData.append('audio', blob, 'recording.wav');
+      formData.append('audio', blob, `recording.${extension}`);
       formData.append('language', selectedLanguageCode);
+      formData.append('mime_type', mimeType);
 
       const response = await fetch('/api/stt', {
         method: 'POST',
@@ -316,12 +343,17 @@ export default function App() {
 
       if (response.ok) {
         const data = await response.json();
-        if (data.transcript) {
+        if (data.transcript && data.transcript.trim()) {
           setQuestionText(data.transcript);
+        } else {
+          setAnalysisError(`Speech recognition completed for ${currentLang.name}, but no spoken text was recognized. Please speak louder or closer to microphone.`);
         }
+      } else {
+        const errJson = await response.json().catch(() => ({}));
+        setAnalysisError(`Speech recognition failed (${response.status}): ${errJson.detail || response.statusText}`);
       }
     } catch (err) {
-      console.log("STT server error:", err);
+      setAnalysisError(`Could not connect to speech recognition service: ${err.message}`);
     } finally {
       setIsTranscribing(false);
     }

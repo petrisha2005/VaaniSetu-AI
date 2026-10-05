@@ -180,11 +180,22 @@ def get_languages():
     return {"languages": list(SUPPORTED_LANGUAGES.values())}
 
 @app.post("/api/stt")
-async def speech_to_text_endpoint(audio: UploadFile = File(...), language: str = Form("kn-IN")):
+async def speech_to_text_endpoint(
+    audio: UploadFile = File(...),
+    language: str = Form("kn-IN"),
+    mime_type: Optional[str] = Form(None)
+):
     """Transcribes user voice recording using Sarvam Saaras v4."""
     try:
+        ext = os.path.splitext(audio.filename)[1].lower() if audio.filename else ".webm"
+        if not ext or ext == ".":
+            ext = ".webm"
+            
         audio_bytes = await audio.read()
-        temp_audio_path = os.path.join(UPLOADS_DIR, f"voice_{uuid.uuid4().hex[:8]}.wav")
+        if not audio_bytes or len(audio_bytes) < 100:
+            raise HTTPException(status_code=400, detail="Recorded audio file is empty or too short.")
+
+        temp_audio_path = os.path.join(UPLOADS_DIR, f"voice_{uuid.uuid4().hex[:8]}{ext}")
         with open(temp_audio_path, "wb") as f:
             f.write(audio_bytes)
 
@@ -193,7 +204,13 @@ async def speech_to_text_endpoint(audio: UploadFile = File(...), language: str =
         if os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
 
-        return {"transcript": transcript, "language": language}
+        return {
+            "transcript": transcript,
+            "language": language,
+            "filename": audio.filename,
+            "size_bytes": len(audio_bytes),
+            "format": ext
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Speech-to-text failed: {str(e)}")
 
