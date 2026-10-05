@@ -364,12 +364,20 @@ const SAMPLE_KANNADA_DOC = `ಕರ್ನಾಟಕ ಸರ್ಕಾರ
         const data = await response.json();
         if (data.transcript && data.transcript.trim()) {
           setQuestionText(data.transcript);
+          if (data.quota_exceeded) {
+            setAnalysisError("Sarvam STT API quota limit reached. Loaded sample question for demo.");
+          }
         } else {
           setAnalysisError(`Speech recognition completed for ${currentLang.name}, but no spoken text was recognized. Please speak louder or closer to microphone.`);
         }
       } else {
         const errJson = await response.json().catch(() => ({}));
-        setAnalysisError(`Speech recognition failed (${response.status}): ${errJson.detail || response.statusText}`);
+        let userMsg = errJson.detail || response.statusText;
+        if (userMsg.includes("insufficient_quota_error") || userMsg.includes("402") || userMsg.includes("No credits available")) {
+          userMsg = "Sarvam AI API quota exceeded (No credits available). Loaded sample question for demo.";
+          setQuestionText(currentLang.sampleQuestion);
+        }
+        setAnalysisError(userMsg);
       }
     } catch (err) {
       setAnalysisError(`Could not connect to speech recognition service: ${err.message}`);
@@ -434,6 +442,10 @@ const SAMPLE_KANNADA_DOC = `ಕರ್ನಾಟಕ ಸರ್ಕಾರ
         audioUrl: data.audio_url || null
       });
 
+      if (data.quota_exceeded) {
+        setAnalysisError("Sarvam AI API quota reached. Loaded document response.");
+      }
+
       setIsProcessing(false);
       setTimeout(() => {
         document.getElementById('answer-hero-card')?.scrollIntoView({ behavior: 'smooth' });
@@ -441,7 +453,11 @@ const SAMPLE_KANNADA_DOC = `ಕರ್ನಾಟಕ ಸರ್ಕಾರ
 
     } catch (err) {
       console.error("Analysis Error:", err);
-      setAnalysisError(err.message || "Failed to analyze document. Please check connection.");
+      let errMsg = err.message || "Failed to analyze document. Please check connection.";
+      if (errMsg.includes("insufficient_quota_error") || errMsg.includes("402") || errMsg.includes("No credits available")) {
+        errMsg = "Sarvam AI API quota limit reached. Please add credits to your Sarvam account.";
+      }
+      setAnalysisError(errMsg);
       setIsProcessing(false);
     }
   };
