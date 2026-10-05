@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://vaanisetu-ai-e0lt.onrender.com/api/:path*"
+    }
+  ]
+}
