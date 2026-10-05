@@ -84,41 +84,36 @@ export default function App() {
   const questionAudioRef = useRef(null);
   const fileInputRef = useRef(null);
 
+const SAMPLE_KANNADA_DOC = `ಕರ್ನಾಟಕ ಸರ್ಕಾರ
+ಅಭಿವೃದ್ಧಿ ಮತ್ತು ಭೂಸ್ವಾಧೀನ ಇಲಾಖೆ
+ಬೆಂಗಳೂರು ಗ್ರಾಮಾಂತರ ಜಿಲ್ಲೆ
+
+ಅಧಿಕೃತ ಪ್ರಕಟಣೆ
+ಕ್ರ.ಸಂ.: ಅ.ಭೂ.ಸ್ವಾ./ಕೆ.ಆರ್.ಪುರಂ/ಬೆಂ.ಗ್ರಾ./2023-24/34H
+ದಿನಾಂಕ: ೧೪/೦೧/202೪
+
+ಕರ್ನಾಟಕ ಭೂಸ್ವಾಧೀನ ಕಾಯ್ದೆ 2013ರ ಅಡಿಯಲ್ಲಿ, ಕೆ.ಆರ್.ಪುರಂ ತಾಲ್ಲೂಕಿನ ಸೂಲಿಕೆರೆ ಗ್ರಾಮದಲ್ಲಿ ಪ್ರಸ್ತಾಪಿತ ರಸ್ತೆ ವಿಸ್ತರಣೆ ಯೋಜನೆಗಾಗಿ ಜಮೀನುಗಳನ್ನು ವಶಪಡಿಸಿಕೊಳ್ಳಲು ಪ್ರಸ್ತಾಪಿಸಲಾಗಿದೆ.
+
+ಸಲ್ಲಿಸಬೇಕಾದ ದಾಖಲೆಗಳು:
+• ಭೂಮಿ ಮತ್ತು ಪಹಣಿ (RTC)
+• ಆಧಾರ್ ಕಾರ್ಡ್ ನಕಲು
+• ಬ್ಯಾಂಕ್ ಪಾಸ್ ಬುಕ್ ನಕಲು
+• PAN ಕಾರ್ಡ್ ನಕಲು
+
+ದಾಖಲೆಗಳನ್ನು ಕೆ.ಆರ್.ಪುರಂ ತಾಲ್ಲೂಕು ಕಚೇರಿಗೆ ಸಲ್ಲಿಸಬೇಕು.
+ಕೊನೆಯ ದಿನಾಂಕ: ೧೫/೦೩/೨೦೨೪`;
+
   // Sync sample question & answer when language changes
-  const handleLanguageChange = async (newCode) => {
+  const handleLanguageChange = (newCode) => {
     setSelectedLanguageCode(newCode);
     const newMeta = getLanguageMeta(newCode);
 
     if (isSampleMode) {
       setQuestionText(newMeta.sampleQuestion);
-      if (sampleAnswersMap[newCode]) {
-        setCurrentAnswerData(sampleAnswersMap[newCode]);
-      } else {
-        // Dynamically translate answer via API
-        try {
-          const res = await fetch('/api/translate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-              text: sampleAnswersMap["kn-IN"].answer,
-              source_language: "kn-IN",
-              target_language: newCode
-            })
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setCurrentAnswerData({
-              ...sampleAnswersMap["kn-IN"],
-              answer: data.translated_text,
-              audioUrl: null
-            });
-          }
-        } catch (e) {
-          console.log("Translation error:", e);
-        }
-      }
+      setCurrentAnswerData(null);
     } else {
       setQuestionText(newMeta.placeholder);
+      setCurrentAnswerData(null);
     }
   };
 
@@ -162,14 +157,38 @@ export default function App() {
 
   const toggleAnswerAudio = () => {
     const audio = answerAudioRef.current;
-    if (!audio || !currentAnswerData?.audioUrl) return;
+    if (currentAnswerData?.audioUrl && audio) {
+      if (isPlayingAnswer) {
+        audio.pause();
+        setIsPlayingAnswer(false);
+      } else {
+        audio.playbackRate = playbackRate;
+        audio.play()
+          .then(() => setIsPlayingAnswer(true))
+          .catch((err) => {
+            console.log("Bulbul audio playback failed, falling back to browser speech synthesis:", err);
+            speakWithSpeechSynthesis();
+          });
+      }
+    } else if (currentAnswerData?.answer) {
+      speakWithSpeechSynthesis();
+    }
+  };
 
-    if (isPlayingAnswer) {
-      audio.pause();
+  const speakWithSpeechSynthesis = () => {
+    if (!('speechSynthesis' in window) || !currentAnswerData?.answer) return;
+
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
       setIsPlayingAnswer(false);
     } else {
-      audio.playbackRate = playbackRate;
-      audio.play().then(() => setIsPlayingAnswer(true)).catch(err => console.log(err));
+      const utterance = new SpeechSynthesisUtterance(currentAnswerData.answer);
+      utterance.lang = selectedLanguageCode;
+      utterance.rate = playbackRate;
+      utterance.onend = () => setIsPlayingAnswer(false);
+      utterance.onerror = () => setIsPlayingAnswer(false);
+      window.speechSynthesis.speak(utterance);
+      setIsPlayingAnswer(true);
     }
   };
 
@@ -370,24 +389,14 @@ export default function App() {
     setIsProcessing(true);
     setProcessingStage(1);
 
-    // Fast simulated execution for sample mode if backend API is offline
-    if (isSampleMode && !uploadedFile) {
-      setTimeout(() => setProcessingStage(2), 900);
-      setTimeout(() => setProcessingStage(3), 1800);
-      setTimeout(() => {
-        setIsProcessing(false);
-        setCurrentAnswerData(sampleAnswersMap[selectedLanguageCode] || sampleAnswersMap["kn-IN"]);
-        document.getElementById('answer-hero-card')?.scrollIntoView({ behavior: 'smooth' });
-      }, 2500);
-      return;
-    }
-
-    // Real API Call for User Uploaded or Selected Document
+    // Real API Call for User Uploaded or Sample Document
     try {
       setProcessingStage(1); // Document AI OCR
       const formData = new FormData();
       if (uploadedFile) {
         formData.append('document', uploadedFile);
+      } else {
+        formData.append('raw_text', SAMPLE_KANNADA_DOC);
       }
       formData.append('question', questionText);
       formData.append('language', selectedLanguageCode);
@@ -867,7 +876,7 @@ export default function App() {
                     <div className="flex items-center gap-3">
                       <button 
                         onClick={toggleAnswerAudio}
-                        disabled={!currentAnswerData.audioUrl}
+                        disabled={!currentAnswerData?.answer}
                         className="w-12 h-12 rounded-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-forest-950 flex items-center justify-center shadow-glow-gold transition-transform hover:scale-105 disabled:opacity-50"
                       >
                         {isPlayingAnswer ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
