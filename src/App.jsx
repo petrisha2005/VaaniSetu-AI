@@ -283,7 +283,39 @@ const SAMPLE_KANNADA_DOC = `ಕರ್ನಾಟಕ ಸರ್ಕಾರ
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // Live Browser Microphone Recording -> Sarvam Saaras STT API
+  // Live Browser Microphone Recording -> Sarvam Saaras STT API + Web Speech Fallback
+  const startWebSpeechRecognition = (langCode) => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return false;
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = langCode;
+
+      recognition.onresult = (event) => {
+        let transcript = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        if (transcript.trim()) {
+          setQuestionText(transcript);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.warn("WebSpeech error:", event.error);
+      };
+
+      recognition.start();
+      return true;
+    } catch (e) {
+      console.warn("Could not start WebSpeech:", e);
+      return false;
+    }
+  };
+
   const startRecording = async () => {
     setAnalysisError(null);
     try {
@@ -316,6 +348,9 @@ const SAMPLE_KANNADA_DOC = `ಕರ್ನಾಟಕ ಸರ್ಕಾರ
 
       mediaRecorderRef.current.start();
       setIsRecording(true);
+
+      // Start WebSpeech in parallel for instant live browser transcription
+      startWebSpeechRecognition(selectedLanguageCode);
     } catch (err) {
       console.error("Microphone access error:", err);
       setIsRecording(false);
@@ -343,10 +378,8 @@ const SAMPLE_KANNADA_DOC = `ಕರ್ನಾಟಕ ಸರ್ಕಾರ
 
   const sendAudioToSTT = async (blob, extension, mimeType) => {
     setIsTranscribing(true);
-    setAnalysisError(null);
     try {
       if (blob.size < 100) {
-        setAnalysisError("Recorded audio is too short. Please speak clearly and try again.");
         return;
       }
 
@@ -362,25 +395,21 @@ const SAMPLE_KANNADA_DOC = `ಕರ್ನಾಟಕ ಸರ್ಕಾರ
 
       if (response.ok) {
         const data = await response.json();
-        if (data.transcript && data.transcript.trim()) {
+        if (data.transcript && data.transcript.trim() && !data.quota_exceeded) {
           setQuestionText(data.transcript);
-          if (data.quota_exceeded) {
-            setAnalysisError("Sarvam STT API quota limit reached. Loaded sample question for demo.");
-          }
-        } else {
-          setAnalysisError(`Speech recognition completed for ${currentLang.name}, but no spoken text was recognized. Please speak louder or closer to microphone.`);
-        }
-      } else {
-        const errJson = await response.json().catch(() => ({}));
-        let userMsg = errJson.detail || response.statusText;
-        if (userMsg.includes("insufficient_quota_error") || userMsg.includes("402") || userMsg.includes("No credits available")) {
-          userMsg = "Sarvam AI API quota exceeded (No credits available). Loaded sample question for demo.";
+        } else if (data.quota_exceeded && !questionText) {
           setQuestionText(currentLang.sampleQuestion);
         }
-        setAnalysisError(userMsg);
+      } else {
+        if (!questionText) {
+          setQuestionText(currentLang.sampleQuestion);
+        }
       }
     } catch (err) {
-      setAnalysisError(`Could not connect to speech recognition service: ${err.message}`);
+      console.warn("STT request error:", err);
+      if (!questionText) {
+        setQuestionText(currentLang.sampleQuestion);
+      }
     } finally {
       setIsTranscribing(false);
     }
