@@ -11,7 +11,15 @@ Instead of forcing users to understand complex English or formal documents, Vaan
 Built using **Sarvam AI's language and speech capabilities**.
 
 ---
+#🚀 Live Demo
 
+Try VaaniSetu AI: https://vaani-setu-ai.vercel.app/
+
+Upload a document, ask a question in your preferred Indian language, and get a grounded answer with Sarvam Vision + Saaras STT + Sarvam 105B + Bulbul TTS.
+
+
+
+-----
 ## 🚀 Why VaaniSetu?
 
 Important documents can contain information that directly affects people's lives:
