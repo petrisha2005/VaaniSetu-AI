@@ -11,7 +11,7 @@ Instead of forcing users to understand complex English or formal documents, Vaan
 Built using **Sarvam AI's language and speech capabilities**.
 
 ---
-#🚀 Live Demo
+**🚀 Live Demo**
 
 Try VaaniSetu AI: https://vaani-setu-ai.vercel.app/
 
