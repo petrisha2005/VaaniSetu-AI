@@ -50,15 +50,23 @@ def clean_ocr_markdown(text: str) -> str:
 # --- REUSABLE SERVICE FUNCTIONS ---
 
 def speech_to_text_service(file_path: str, language_code: str) -> str:
-    """Converts user speech to text using Sarvam Saaras v4."""
+    """Converts user speech to text using Sarvam Saaras v4 with retry backoff."""
     lang = language_code if language_code in SUPPORTED_LANGUAGES else "kn-IN"
-    with open(file_path, "rb") as f:
-        response = client.speech_to_text.transcribe(
-            file=f,
-            model="saaras:v4",
-            language_code=lang
-        )
-    return response.transcript
+    last_err = None
+    for attempt in range(3):
+        try:
+            with open(file_path, "rb") as f:
+                response = client.speech_to_text.transcribe(
+                    file=f,
+                    model="saaras:v4",
+                    language_code=lang
+                )
+            return response.transcript
+        except Exception as e:
+            last_err = e
+            print(f"STT attempt {attempt+1} failed for {lang}: {e}")
+            time.sleep(1.5)
+    raise last_err
 
 def translate_service(text: str, source_lang: str, target_lang: str) -> str:
     """Translates text between languages using Sarvam Translation API."""
@@ -73,12 +81,58 @@ def translate_service(text: str, source_lang: str, target_lang: str) -> str:
         print(f"Sarvam translate fallback for {source_lang}->{target_lang}: {e}")
         return text
 
+INDIC_SCRIPT_RANGES = {
+    "hi-IN": r"\u0900-\u097F",  # Devanagari
+    "mr-IN": r"\u0900-\u097F",  # Devanagari
+    "bn-IN": r"\u0980-\u09FF",  # Bengali
+    "pa-IN": r"\u0A00-\u0A7F",  # Gurmukhi
+    "gu-IN": r"\u0A80-\u0AFF",  # Gujarati
+    "ta-IN": r"\u0B80-\u0BFF",  # Tamil
+    "te-IN": r"\u0C00-\u0C7F",  # Telugu
+    "kn-IN": r"\u0C80-\u0CFF",  # Kannada
+    "ml-IN": r"\u0D00-\u0D7F",  # Malayalam
+    "en-IN": "",                # Latin only
+}
+
+def prepare_tts_text(text: str, target_language: str) -> str:
+    """
+    Prepares and sanitizes text for Sarvam Bulbul TTS by removing characters 
+    from foreign Indian scripts that cause TTS exceptions in the target language.
+    Preserves target language script, Latin letters, numbers, punctuation, and spaces.
+    """
+    if not text:
+        return ""
+
+    allowed_script = INDIC_SCRIPT_RANGES.get(target_language, "")
+
+    # Build regex of forbidden Indic scripts (all Indic scripts except target script)
+    forbidden_chars = []
+    for lang_code, script_range in INDIC_SCRIPT_RANGES.items():
+        if script_range and script_range != allowed_script:
+            forbidden_chars.append(script_range)
+    
+    if forbidden_chars:
+        forbidden_pattern = f"[{''.join(forbidden_chars)}]"
+        text = re.sub(forbidden_pattern, "", text)
+
+    # Clean up empty parentheses/brackets left over like "()" or "( )" and double spaces
+    text = re.sub(r'\(\s*\)', '', text)
+    text = re.sub(r'\[\s*\]', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
 def text_to_speech_service(text: str, language_code: str) -> Optional[str]:
-    """Synthesizes voice audio using Sarvam Bulbul TTS for the target language."""
+    """Synthesizes voice audio using Sarvam Bulbul TTS for the target language with robust fallback."""
+    lang = language_code if language_code in SUPPORTED_LANGUAGES else "kn-IN"
+    
+    tts_text = prepare_tts_text(text, lang)
+    if not tts_text or len(tts_text.strip()) < 2:
+        print(f"TTS skipped: text empty or sanitized to empty for {lang}")
+        return None
+
     try:
-        lang = language_code if language_code in SUPPORTED_LANGUAGES else "kn-IN"
         tts_response = client.text_to_speech.convert(
-            text=text[:500],  # Synthesize text excerpt
+            text=tts_text[:500],  # Synthesize text excerpt
             language_code=lang,
             output_audio_codec="wav"
         )
@@ -90,7 +144,29 @@ def text_to_speech_service(text: str, language_code: str) -> Optional[str]:
             f.write(audio_bytes)
         return f"/api/audio/{audio_filename}"
     except Exception as e:
-        print(f"TTS generation exception for {language_code}: {e}")
+        print(f"TTS primary attempt failed for {lang}: {e}")
+        # Retry once with strict ASCII + target script filtering
+        try:
+            allowed_range = INDIC_SCRIPT_RANGES.get(lang, "")
+            strict_pattern = f"[^a-zA-Z0-9\s.,?!'\":;-{allowed_range}]"
+            fallback_text = re.sub(strict_pattern, "", tts_text).strip()
+            fallback_text = re.sub(r'\s+', ' ', fallback_text)
+            if fallback_text and len(fallback_text) >= 2:
+                tts_response = client.text_to_speech.convert(
+                    text=fallback_text[:500],
+                    language_code=lang,
+                    output_audio_codec="wav"
+                )
+                import base64
+                audio_bytes = base64.b64decode(tts_response.audios[0])
+                audio_filename = f"answer_{uuid.uuid4().hex[:8]}.wav"
+                audio_path = os.path.join(AUDIO_DIR, audio_filename)
+                with open(audio_path, "wb") as f:
+                    f.write(audio_bytes)
+                return f"/api/audio/{audio_filename}"
+        except Exception as retry_e:
+            print(f"TTS retry also failed for {lang}: {retry_e}")
+            
         return None
 
 # --- ENDPOINTS ---
@@ -221,17 +297,20 @@ async def analyze_document(
 You must answer questions strictly based ONLY on the provided document.
 Your response MUST be generated entirely in target language: {target_lang_name} ({language}).
 
-RULES:
-1. Use ONLY information present in the document. Do NOT invent information.
-2. Do NOT provide legal advice.
-3. If the requested information is not present in the document, state: "{not_found_msg}" in answer, set grounded to false, and set confidence to "low".
-4. Never fabricate page numbers.
-5. You MUST return ONLY a single valid JSON object (no markdown code blocks, no extra text) matching this schema:
+CRITICAL MULTILINGUAL & CROSS-LANGUAGE RULES:
+1. Generate the answer, action, and deadline fields entirely using the script and vocabulary of {target_lang_name}.
+2. DO NOT insert raw foreign source-language script into the answer, action, or deadline fields (e.g. do not insert Kannada characters inside a Tamil or Hindi answer).
+3. If referencing terms or quotes from a document written in a different script/language, paraphrase or transliterate them into {target_lang_name} script.
+4. Use ONLY information present in the document. Do NOT invent information or fabricate evidence.
+5. Do NOT provide legal advice.
+6. If the requested information is not present in the document, state: "{not_found_msg}" in answer, set grounded to false, and set confidence to "low".
+7. Never fabricate page numbers.
+8. You MUST return ONLY a single valid JSON object (no markdown code blocks, no extra text) matching this schema:
 {{
-  "answer": "Detailed answer in {target_lang_name} strictly grounded in the document",
+  "answer": "Detailed answer in {target_lang_name} strictly grounded in the document, written strictly in {target_lang_name} script",
   "action": "Explicit action in {target_lang_name} user needs to take, or null if not stated",
   "deadline": "Explicit deadline/last date in {target_lang_name}, or null if not stated",
-  "evidence": "Exact text excerpt or supporting evidence from document",
+  "evidence": "Exact text excerpt or supporting evidence from document (can be in original document language for visual reference)",
   "grounded": true/false,
   "confidence": "high" | "medium" | "low"
 }}"""
@@ -244,15 +323,24 @@ RULES:
 QUESTION ({target_lang_name}):
 {question}"""
 
-        llm_response = client.chat.completions(
-            model="sarvam-105b",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.1,
-            max_tokens=8192
-        )
+        llm_response = None
+        for attempt in range(3):
+            try:
+                llm_response = client.chat.completions(
+                    model="sarvam-105b",
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=0.1,
+                    max_tokens=8192
+                )
+                break
+            except Exception as llm_err:
+                print(f"LLM completion attempt {attempt+1} failed: {llm_err}")
+                if attempt == 2:
+                    raise llm_err
+                time.sleep(2)
 
         raw_content = llm_response.choices[0].message.content or ""
         raw_content_cleaned = re.sub(r'^```(?:json)?\s*', '', raw_content.strip(), flags=re.MULTILINE)
