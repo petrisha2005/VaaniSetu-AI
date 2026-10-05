@@ -34,6 +34,7 @@ export default function App() {
   // Answer & Audio State
   const [showEnglishTranslation, setShowEnglishTranslation] = useState(false);
   const [isPlayingAnswer, setIsPlayingAnswer] = useState(false);
+  const [isGeneratingSampleAudio, setIsGeneratingSampleAudio] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
@@ -64,6 +65,60 @@ export default function App() {
       action: ["RTC நில ஆவணங்கள்", "ஆதார் அட்டை நகல்", "வங்கி பாஸ்புக் நகல்", "PAN அட்டை நகல்"],
       deadline: "சமர்ப்பிப்பதற்கான கடைசி தேதி குறிப்பிடப்படவில்லை (தேதி: 14/01/2024)",
       evidence: "• RTC நில ஆவணம் • ஆதார் நகல் • வங்கி பாஸ்புக் நகல் • PAN நகல்... தேதி: 14/01/2024",
+      grounded: true,
+      confidence: "high",
+      audioUrl: null
+    },
+    "te-IN": {
+      answer: "ఈ అధికారిక నోటీసు ప్రకారం, కె.ఆర్. పురం తాలూకా సులికేరే గ్రామంలో రహదారి వెడల్పు ప్రాజెక్ట్ కోసం భూసేకరణ చట్టం 2013 కింద భూసేకరణ చేపటబడింది. భూ యజమానులు ఆర్టీసీ/పహానీ, ఆధార్ కార్డు, బ్యాంక్ పాస్‌బుక్ మరియు పాన్ కార్డు కాపీలను తాలూకా కార్యాలయంలో సమర్పించాలి. ഈ నోటీసులో నిర్దిష్ట సమర్పణ గడువు ఇవ్వబడలేదు (తేదీ: 14/01/2024).",
+      action: ["RTC/పహానీ కాపీ", "ఆధార్ కాపీ", "బ్యాంక్ పాస్‌బుక్ కాపీ", "PAN కాపీ"],
+      deadline: "నోటీసులో ఎటువంటి స్పష్టమైన గడువు పేర్కొనబడలేదు (తేదీ: 14/01/2024)",
+      evidence: "• ఆర్టీసీ / పహానీ • ఆధార్ కాపీ • బ్యాంక్ పాస్‌బుక్ • PAN కాపీ... తేదీ: 14/01/2024",
+      grounded: true,
+      confidence: "high",
+      audioUrl: null
+    },
+    "ml-IN": {
+      answer: "ഈ ഔദ്യോഗിക നോട്ടീസ് അനുസരിച്ച്, കെ.ആർ. പുരം താലൂക്കിലെ സുലികേരെ ഗ്രാമത്തിൽ റോഡ് വികസന പദ്ധതിക്കായി ഭൂമി ഏറ്റെടുക്കൽ നിയമം 2013 പ്രകാരം ഭൂമി ഏറ്റെടുക്കുന്നു. ഭൂവുടമകൾ ആർ.ടി.സി/പഹാനി, ആധാർ കാർഡ്, ബാങ്ക് പാസ്ബുക്ക്, പാൻ കാർഡ് പകർപ്പുകൾ താലൂക്ക് ഓഫീസിൽ സമർപ്പിക്കണം. സമർപ്പിക്കാനുള്ള നിർദ്ദിഷ്ട അവസാന തീയതി രേഖപ്പെടുത്തിയിട്ടില്ല (തീയതി: 14/01/2024).",
+      action: ["ആർ.ടി.സി / പഹാനി കോപ്പി", "ആധാർ കാർഡ് കോപ്പി", "ബാങ്ക് പാസ്ബുക്ക് കോപ്പി", "PAN കാർഡ് കോപ്പി"],
+      deadline: "അവസാന തീയതി പ്രത്യേകമായി രേഖപ്പെടുത്തിയിട്ടില്ല (തീയതി: 14/01/2024)",
+      evidence: "• ആർ.ടി.സി / പഹാനി • ആധാർ കോപ്പി • ബാങ്ക് പാസ്ബുക്ക് • PAN കോപ്പി... തീയതി: 14/01/2024",
+      grounded: true,
+      confidence: "high",
+      audioUrl: null
+    },
+    "mr-IN": {
+      answer: "या अधिकृत नोटीसनुसार, के.आर. पुरम तालुक्यातील सुलिकेरे गावातील रस्ता रुंदीकरण प्रकल्पासाठी जमीन अधिग्रहण कायदा 2013 अंतर्गत जमीन संपादन केले जात आहे. जमीन मालकांनी आरटीसी/पहाणी, आधार कार्ड, बँक पासबुक आणि पॅन कार्डच्या प्रती तालुका कार्यालयात जमा करणे आवश्यक आहे. अंतिम तारीख नमूद केलेली नाही (तारीख: 14/01/2024).",
+      action: ["RTC/पहाणी प्रत", "आधार कार्ड प्रत", "बँक पासबुक प्रत", "PAN कार्ड प्रत"],
+      deadline: "अंतिम तारीख नमूद केलेली नाही (अधिसूचना तारीख: 14/01/2024)",
+      evidence: "• आरटीसी / पहाणी प्रत • आधार कार्ड प्रत • बँक पासबुक प्रत • PAN कार्ड प्रत... तारीख: 14/01/2024",
+      grounded: true,
+      confidence: "high",
+      audioUrl: null
+    },
+    "bn-IN": {
+      answer: "এই সরকারি নোটিশ অনুসারে, কেআর পুরম তালুকের সুলিকেরে গ্রামে রাস্তা সম্প্রসারণ প্রকল্পের জন্য ভূমি অধিগ্রহণ আইন ২০১৩ এর অধীনে জমি অধিগ্রহণ করা হচ্ছে। জমির মালিকদের আরটিসি/পহানি, আধার কার্ড, ব্যাঙ্ক পাসবুক এবং প্যান কার্ডের কপি তালুক অফিসে জমা দিতে হবে। কোনো নির্দিষ্ট শেষ তারিখ উল্লেখ করা হয়নি (তারিখ: 14/01/2024)।",
+      action: ["RTC/পহানি কপি", "আধার কার্ড কপি", "ব্যাঙ্ক পাসবুক কপি", "PAN কার্ড কপি"],
+      deadline: "কোনো নির্দিষ্ট শেষ তারিখ উল্লেখ করা হয়নি (তারিখ: 14/01/2024)",
+      evidence: "• আরটিসি / পহানি কপি • আধার কার্ড কপি • ব্যাঙ্ক পাসবুক কপি • PAN কার্ড কপি... তারিখ: 14/01/2024",
+      grounded: true,
+      confidence: "high",
+      audioUrl: null
+    },
+    "gu-IN": {
+      answer: "આ સત્તાવાર નોટિસ મુજબ, કે.આર. પુરમ તાલુકાના સુલીકેરે ગામમાં રસ્તા પહોળા કરવાના પ્રોજેક્ટ માટે જમીન સંપાદન કાયદા 2013 હેઠળ જમીન સંપાદિત કરવામાં આવી રહી છે. જમીન માલિકોએ આરટીસી/પહાણી, આધાર કાર્ડ, બેંક પાસબુક અને પાન કાર્ડની નકલ તાલુકા કચેરીમાં જમા કરાવવાની રહેશે. અંતિમ તારીખ દર્શાવવામાં આવી નથી (તારીખ: 14/01/2024).",
+      action: ["RTC/પહાણી નકલ", "આધાર કાર્ડ નકલ", "બેંક પાસબુક નકલ", "PAN કાર્ડ નકલ"],
+      deadline: "અંતિમ તારીખ દર્શાવવામાં આવી નથી (તારીખ: 14/01/2024)",
+      evidence: "• આરટીસી / પહાણી નકલ • આધાર કાર્ડ નકલ • બેંક પાસબુક નકલ • PAN કાર્ડ નકલ... તારીખ: 14/01/2024",
+      grounded: true,
+      confidence: "high",
+      audioUrl: null
+    },
+    "pa-IN": {
+      answer: "ਇਸ ਸਰਕਾਰੀ ਨੋਟਿਸ ਅਨੁਸਾਰ, ਕੇ.ਆਰ. ਪੁਰਮ ਤਾਲੁਕਾ ਦੇ ਸੁਲੀਕੇਰੇ ਪਿੰਡ ਵਿੱਚ ਸੜਕ ਚੌੜੀਕਰਨ ਪ੍ਰੋਜੈਕਟ ਲਈ ਜ਼ਮੀਨ ਪ੍ਰਾਪਤੀ ਐਕਟ 2013 ਅਧੀਨ ਜ਼ਮੀਨ ਪ੍ਰਾਪਤ ਕੀਤੀ ਜਾ ਰਹੀ ਹੈ। ਜ਼ਮੀਨ ਮਾਲਕਾਂ ਨੂੰ ਆਰ.ਟੀ.ਸੀ/ਪਹਾਣੀ, ਆਧਾਰ ਕਾਰਡ, ਬੈਂਕ ਪਾਸਬੁੱਕ, ਅਤੇ ਪੈਨ ਕਾਰਡ ਦੀਆਂ ਕਾਪੀਆਂ ਤਾਲੁਕਾ ਦਫ਼ਤਰ ਵਿੱਚ ਜਮ੍ਹਾ ਕਰਵਾਉਣੀਆਂ ਪੈਣਗੀਆਂ। ਕੋਈ ਆਖਰੀ ਮਿਤੀ ਨਹੀਂ ਦਿੱਤੀ ਗਈ (ਮਿਤੀ: 14/01/2024)।",
+      action: ["RTC/ਪਹਾਣੀ ਕਾਪੀ", "ਆਧਾਰ ਕਾਰਡ ਕਾਪੀ", "ਬੈਂਕ ਪਾਸਬੁੱਕ ਕਾਪੀ", "PAN ਕਾਰਡ ਕਾਪੀ"],
+      deadline: "ਕੋਈ ਆਖਰੀ ਮਿਤੀ ਨਹੀਂ ਦਿੱਤੀ ਗਈ (ਮਿਤੀ: 14/01/2024)",
+      evidence: "• ਆਰ.ਟੀ.ਸੀ / ਪਹਾਣੀ ਕਾਪੀ • ਆਧਾਰ ਕਾਪੀ • ਬੈਂਕ ਪਾਸਬੁੱਕ ਕਾਪੀ • PAN ਕਾਪੀ... ਮਿਤੀ: 14/01/2024",
       grounded: true,
       confidence: "high",
       audioUrl: null
@@ -110,7 +165,8 @@ const SAMPLE_KANNADA_DOC = `ಕರ್ನಾಟಕ ಸರ್ಕಾರ
 
     if (isSampleMode) {
       setQuestionText(newMeta.sampleQuestion);
-      setCurrentAnswerData(null);
+      const sampleData = sampleAnswersMap[newCode] || sampleAnswersMap["kn-IN"];
+      setCurrentAnswerData(sampleData);
     } else {
       setQuestionText(newMeta.placeholder);
       setCurrentAnswerData(null);
@@ -155,8 +211,10 @@ const SAMPLE_KANNADA_DOC = `ಕರ್ನಾಟಕ ಸರ್ಕಾರ
     };
   }, []);
 
-  const toggleAnswerAudio = () => {
+  const toggleAnswerAudio = async () => {
     const audio = answerAudioRef.current;
+    
+    // Case 1: Audio URL already present (e.g. kn-IN static /vaanisetu_answer.wav or cached /api/audio/answer_xxx.wav)
     if (currentAnswerData?.audioUrl && audio) {
       if (isPlayingAnswer) {
         audio.pause();
@@ -166,12 +224,64 @@ const SAMPLE_KANNADA_DOC = `ಕರ್ನಾಟಕ ಸರ್ಕಾರ
         audio.play()
           .then(() => setIsPlayingAnswer(true))
           .catch((err) => {
-            console.log("Bulbul audio playback failed, falling back to browser speech synthesis:", err);
-            speakWithSpeechSynthesis();
+            console.error("Audio playback failed:", err);
+            setIsPlayingAnswer(false);
           });
       }
-    } else if (currentAnswerData?.answer) {
-      speakWithSpeechSynthesis();
+      return;
+    }
+
+    // Case 2: Non-Kannada sample answer without audioUrl -> generate live Sarvam Bulbul TTS audio via backend /api/analyze
+    if (currentAnswerData?.answer && !isGeneratingSampleAudio) {
+      setIsGeneratingSampleAudio(true);
+      try {
+        const formData = new FormData();
+        if (uploadedFile) {
+          formData.append('document', uploadedFile);
+        } else {
+          formData.append('raw_text', SAMPLE_KANNADA_DOC);
+        }
+        formData.append('question', questionText || currentLang.sampleQuestion);
+        formData.append('language', selectedLanguageCode);
+
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.audio_url) {
+            const generatedUrl = data.audio_url;
+            
+            // Cache in sampleAnswersMap so subsequent play clicks reuse it
+            if (sampleAnswersMap[selectedLanguageCode]) {
+              sampleAnswersMap[selectedLanguageCode].audioUrl = generatedUrl;
+            }
+
+            // Update current answer state
+            setCurrentAnswerData(prev => ({
+              ...prev,
+              audioUrl: generatedUrl
+            }));
+
+            // Auto-play the returned audio URL
+            setTimeout(() => {
+              if (answerAudioRef.current) {
+                answerAudioRef.current.src = generatedUrl;
+                answerAudioRef.current.playbackRate = playbackRate;
+                answerAudioRef.current.play()
+                  .then(() => setIsPlayingAnswer(true))
+                  .catch(e => console.error("Play generated audio error:", e));
+              }
+            }, 100);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to generate Sarvam Bulbul TTS for sample:", err);
+      } finally {
+        setIsGeneratingSampleAudio(false);
+      }
     }
   };
 
@@ -921,10 +1031,16 @@ const SAMPLE_KANNADA_DOC = `ಕರ್ನಾಟಕ ಸರ್ಕಾರ
                     <div className="flex items-center gap-3">
                       <button 
                         onClick={toggleAnswerAudio}
-                        disabled={!currentAnswerData?.answer}
+                        disabled={!currentAnswerData?.answer || isGeneratingSampleAudio}
                         className="w-12 h-12 rounded-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-forest-950 flex items-center justify-center shadow-glow-gold transition-transform hover:scale-105 disabled:opacity-50"
                       >
-                        {isPlayingAnswer ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
+                        {isGeneratingSampleAudio ? (
+                          <RefreshCw className="w-6 h-6 animate-spin" />
+                        ) : isPlayingAnswer ? (
+                          <Pause className="w-6 h-6" />
+                        ) : (
+                          <Play className="w-6 h-6 ml-0.5" />
+                        )}
                       </button>
                       <div>
                         <h4 className="font-serif font-bold text-ivory-100 text-base">{currentLang.listenLabel}</h4>
